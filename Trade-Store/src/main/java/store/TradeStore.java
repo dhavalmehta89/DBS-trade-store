@@ -14,6 +14,10 @@ import java.util.stream.Collectors;
 
 public class TradeStore {
 
+    public TradeStore() {
+      this.registerExpiryUpdateService();
+    }
+
     private Map <String, Trade> store = new HashMap<>();
 
     public List<Trade> findTrades(String tradeId){
@@ -27,26 +31,20 @@ public class TradeStore {
 
     public void insertTrade(Trade trade){
 
-        Boolean isTradeValid = validateTrade(trade);
-
-        if(Boolean.TRUE.equals(isTradeValid)){
-            store.put(trade.getTradeId()+trade.getVersion(),trade);
-        }
+        this.validateTrade(trade);
+        store.put(trade.getTradeId()+trade.getVersion(),trade);
 
     }
 
     public void updateTrade(Trade trade){
 
-        Boolean isTradeValid = validateTrade(trade);
+        this.validateTrade(trade);
 
-        if(Boolean.TRUE.equals(isTradeValid)){
-            if(store.containsKey(trade.getTradeId()+trade.getVersion())){
-                store.put(trade.getTradeId()+trade.getVersion(),trade);
-            }else{
-                throw new RuntimeException("Trade not found for given TradeId and Version");
-            }
+        if(store.containsKey(trade.getTradeId()+trade.getVersion())){
+            store.put(trade.getTradeId()+trade.getVersion(),trade);
+        }else{
+            throw new RuntimeException("Trade not found for given TradeId and Version");
         }
-
 
     }
 
@@ -57,7 +55,7 @@ public class TradeStore {
     private void registerExpiryUpdateService(){
 
         LocalDate today = LocalDate.now();
-        LocalDate tomorrow = today.plusDays(1);
+        LocalDateTime tomorrow = today.plusDays(1).atStartOfDay();
 
         Duration duration = Duration.between(LocalDateTime.now(),tomorrow);
 
@@ -79,7 +77,7 @@ public class TradeStore {
         return this.store.size();
     }
 
-    public Boolean validateTrade(Trade trade){
+    public void validateTrade(Trade trade){
 
         List<Trade> trades = findTrades(trade.getTradeId());
 
@@ -92,7 +90,7 @@ public class TradeStore {
         if (trade.getMaturityDate() != null && trade.getMaturityDate().isBefore(LocalDate.now())) {
             throw new IllegalStateException("Maturity date is null or date is passed");
         }
-        return Boolean.TRUE;
+
     }
 
 }
